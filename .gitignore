@@ -1,0 +1,6 @@
+ICO-backend/node_modules
+ICO-backend/dist
+ICO-frontend/node_modules
+ICO-smart-contract/node_modules
+ICO-smart-contract/artifacts
+ICO-smart-contract/cache
