@@ -32,8 +32,8 @@ function App() {
         console.log(raisedAmount)
         let lockBalance = await ICO.methods.lockBalance(accounts[0]).call()
         console.log(lockBalance)
-        setRaisedAmount(Number(raisedAmount))
-        setLockBalance(Number(lockBalance))
+        setRaisedAmount(web3.utils.fromWei(raisedAmount,"ether"))
+        setLockBalance(web3.utils.fromWei(lockBalance,"ether"))
 
       } catch (error) {
         console.log(error);
@@ -58,9 +58,6 @@ function App() {
       nonce,
       value:web3.utils.toWei(value.toString(),"ether")
     })
-
-   
-  
   }
 
  

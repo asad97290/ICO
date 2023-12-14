@@ -19,7 +19,7 @@ async function main() {
   );
   await ico.deployed();
   
-  await token.connect(owner).mint(ico.address,ethers.utils.parseUnits('1000000', 'wei'))
+  await token.connect(owner).mint(ico.address,ethers.utils.parseEther('1000000', 'wei'))
 console.log("ICO",ico.address)
  
 }
