@@ -114,6 +114,11 @@ contract ICO is AccessControl {
             revert CommanErrors.HardCapExceed();
         }
 
+        uint256 tokenAmount = amount / rate;
+        if(tokenAmount > token.balanceOf(address(this))){
+            revert CommanErrors.NotEnoughTokens();
+        }
+    
 
         // Add the investment amount against the address
         unchecked {
@@ -127,7 +132,7 @@ contract ICO is AccessControl {
 
         if(goalReached){
             uint lockBal = lockBalance[sender];
-            token.transfer(sender, lockBal * rate);
+            token.transfer(sender, lockBal / rate);
         }else if(address(this).balance >= softCap){
             goalReached = true;
             distribution();
@@ -214,7 +219,7 @@ contract ICO is AccessControl {
             address investor = investors[i];
             uint lockBal = lockBalance[investor];
             if (lockBal != 0) {
-                token.transfer(investor, lockBal * rate);
+                token.transfer(investor, lockBal / rate);
                 lockBalance[investor] = 0;
             }
             unchecked {

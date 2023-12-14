@@ -24,5 +24,6 @@ library CommanErrors{
     error SoftCapNotReached();         // Error thrown when input investment amount is invalid.
     error YouAreNotInvestor();         // Error thrown when input investment amount is invalid.
     error SoftCapReached();         // Error thrown when input investment amount is invalid.
+    error NotEnoughTokens();         // Error thrown when input investment amount is invalid.
 
 }
