@@ -27,7 +27,19 @@ module.exports = {
       "arbitrum-sepolia":process.env.ETHERSCAN_API
     }
   },
-
+  customChains: [
+    {
+      network: "arbitrum-sepolia",
+      chainId: 421614,
+      urls: {
+        apiURL: "https://sepolia.arbiscan.io/api",
+        browserURL: "https://sepolia.arbiscan.io"
+      }
+    }
+  ],
+  sourcify: {
+    enabled: true
+  },
   solidity: {
     compilers: [
       {

@@ -1,20 +1,21 @@
 const hre = require("hardhat");
-const ICO = require("../args/ICO");
+const ICOARG = require("../args/ICO");
 async function main() {
+  console.log(ICOARG)
   const [owner] = await ethers.getSigners();
   const ICOToken = await ethers.getContractFactory("ICOToken");
   const token = ICOToken.attach(
-    ICO[4]
+    ICOARG[4]
   );
   const ICO = await ethers.getContractFactory("ICO")
   
   const ico = await ICO.deploy(
-    ICO[0], 
-    ICO[1], 
-    ICO[2],
-    ICO[3],
-    ICO[4], // token
-    ICO[5],
+    Math.floor(Date.now() / 1000) + 60, // start time 1 minute from now
+    Math.floor(Date.now() / 1000) + 6000, // end time 10 minutes from now
+    ICOARG[2],
+    ICOARG[3],
+    ICOARG[4], // token
+    ICOARG[5],
   );
   await ico.deployed();
   

@@ -17,7 +17,7 @@ contract ICOToken is ERC20Capped,Ownable {
      * @param name The name of the token.
      * @param symbol The symbol of the token.
      */
-    constructor(string memory name, string memory symbol,uint _cap) ERC20(name, symbol) ERC20Capped(_cap) {
+    constructor(string memory name, string memory symbol,uint _cap) ERC20(name, symbol) ERC20Capped(_cap) Ownable(msg.sender){
     }
 
     /**
