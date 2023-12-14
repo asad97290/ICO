@@ -1,5 +1,4 @@
 require("@nomicfoundation/hardhat-toolbox");
-require("@nomicfoundation/hardhat-verify");
 
 require("dotenv").config()
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -28,15 +27,7 @@ module.exports = {
       "arbitrum-sepolia":process.env.ETHERSCAN_API
     }
   },
-  customChains: [
-    {
-      network: "arbitrum-sepolia",
-      chainId: 421614,
-      urls: {
-        browserURL: "https://sepolia.arbiscan.io/"
-      }
-    }
-  ],
+
   solidity: {
     compilers: [
       {
