@@ -13,6 +13,7 @@ function App() {
   const [lockBalance, setLockBalance] = useState(0);
   const [tokenBalance, setTokenBalance] = useState(0);
   const [txData, setTxData] = useState([]);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     (async function () {
@@ -29,8 +30,16 @@ function App() {
           method: "eth_requestAccounts",
         });
         setAccounts(accounts[0]);
-        console.log("abi,address", abi, address);
         let ICO = new web3.eth.Contract(abi, address);
+        let res = await Promise.all([
+          ICO.methods.softCap().call(),
+          ICO.methods.startTime().call(),
+          ICO.methods.closeTime().call(),
+          ICO.methods.hasRole(web3.utils.soliditySha3("OWNER_ROLE"),accounts[0]).call(),
+          ICO.methods.raisedAmount().call(),
+          ICO.methods.contributions(accounts[0]).call()
+        ])
+        setIsAdmin(res[3])
         let TokenContract = new web3.eth.Contract(Token.abi, Token.address);
         console.log(ICO);
         setContract(ICO);
@@ -38,9 +47,9 @@ function App() {
         console.log("wei",wei)
         let bal = web3.utils.fromWei(wei,"ether")
         setTokenBalance(bal)
-        let raisedAmount = await ICO.methods.raisedAmount().call();
+        let raisedAmount = res[4]
         console.log(raisedAmount);
-        let lockBalance = await ICO.methods.contributions(accounts[0]).call();
+        let lockBalance = res[5]
         console.log(lockBalance.amount);
         setRaisedAmount(web3.utils.fromWei(raisedAmount, "ether"));
         setLockBalance(web3.utils.fromWei(lockBalance.amount, "ether"));
@@ -97,6 +106,79 @@ function App() {
     }
   }
 
+
+  async function withdrawAdmin() {
+    try {
+      let gasPrice = await web3.eth.getGasPrice();
+      console.log("gasPrice", gasPrice);
+
+      let gas = await contract.methods
+        .withdraw()
+        .estimateGas({
+          from: accounts
+        });
+      console.log("gas", gas.toString());
+      const nonce = await web3.eth.getTransactionCount(accounts);
+
+      await contract.methods
+        .withdraw()
+        .send({
+          from: accounts,
+          to: address,
+          gas,
+          gasPrice,
+          nonce
+        })
+        .on("transactionHash", (tx) => {
+          console.log(tx);
+        })
+        .on("receipt", async (receipt) => {
+          console.log(receipt);
+       
+        });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+
+  async function claimToken() {
+    try {
+      let gasPrice = await web3.eth.getGasPrice();
+      console.log("gasPrice", gasPrice);
+
+      let gas = await contract.methods
+        .claimToken()
+        .estimateGas({
+          from: accounts
+        });
+      console.log("gas", gas.toString());
+      const nonce = await web3.eth.getTransactionCount(accounts);
+
+      await contract.methods
+        .claimToken()
+        .send({
+          from: accounts,
+          to: address,
+          gas,
+          gasPrice,
+          nonce
+        })
+        .on("transactionHash", (tx) => {
+          console.log(tx);
+        })
+        .on("receipt", async (receipt) => {
+          console.log(receipt);
+       
+        });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+
+
+
   return (
     <>
       <p>{accounts}</p>
@@ -111,8 +193,21 @@ function App() {
           onChange={(e) => setValue(e.target.value)}
         />
       </div>
+      <div style={{display:"flex"}}>
       <div className="card">
         <button onClick={invest}>invest</button>
+      </div>
+      {isAdmin?(
+      <div className="card">
+        <button onClick={withdrawAdmin}>withdraw Admin</button>
+      </div>
+      ):null}
+
+    {isAdmin?(
+      <div className="card">
+        <button onClick={claimToken}>claim Token</button>
+      </div>
+      ):null}
       </div>
       <ul>
         {txData.map((i,index)=>(

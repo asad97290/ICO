@@ -11,26 +11,25 @@ import "./utils/Errors.sol";
  * @dev A smart contract for conducting an Initial Coin Offering (ICO)
  */
 contract ICO is AccessControl {
+    uint256 public closeTime;
+    uint256 public startTime;
+    uint256 public rate;
+    uint256 public softCap;
+    uint256 public hardCap;
+    uint256 public raisedAmount;
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
-
-    uint public closeTime;
-    uint public startTime;
-    uint public rate;
-    uint public softCap;
-    uint public hardCap;
-    uint public raisedAmount;
     ICOToken public token;
-    address[] public investors;
-    bool public goalReached;
+    // struct for investment 
     struct Investment{
-        uint amount;
-        uint tokenAmount;
+        uint256 amount;
+        uint256 tokenAmount;
     }
     // Mapping to track the contributions of each address
     mapping(address => Investment) public contributions;
 
-    event Withdrawal(address account, uint amount);
-    event Invest(address account, uint ethAmount,uint tokenAmount);
+    event Withdrawal(address account, uint256 ethAmount);
+    event Invest(address account, uint256 ethAmount,uint256 tokenAmount);
+    event Claim(address account, uint256 tokenAmount);
 
     /**
      * @dev Constructor to initialize ICO parameters
@@ -42,12 +41,12 @@ contract ICO is AccessControl {
      * @param _rate Rate of the ICO token in ETH
      */
     constructor(
-        uint _startTime,
-        uint _closeTime,
-        uint _softCap,
-        uint _hardCap,
-        ICOToken _token,
-        uint _rate
+        uint256 _startTime,
+        uint256 _closeTime,
+        uint256 _softCap,
+        uint256 _hardCap,
+        uint256 _rate,
+        ICOToken _token
     ) payable {
         if (block.timestamp > _closeTime) {
             revert CommanErrors.WrongEndTime();
@@ -76,31 +75,15 @@ contract ICO is AccessControl {
         token = _token;
     }
 
-    /**
-     * @dev Check if an address is already an investor
-     * @param investor Address to check
-     * @return True if the address is an investor, false otherwise
-     */
-    function isInvestor(address investor) private view returns (bool) {
-        uint len = investors.length;
-        for (uint i = 0; i < len;) {
-            if (investors[i] == investor) {
-                return true;
-            }
-
-            unchecked {
-                i = i + 1;
-            }
-        }
-        return false;
-    }
+  
 
 
     /**
      * @dev Function to allow investors to contribute funds to the ICO
      */
     function invest() external payable {
-        uint amount = msg.value;
+        //cache msgValue 
+        uint256 amount = msg.value;
 
         // Revert if the investment amount is zero
         if (amount == 0) {
@@ -117,7 +100,7 @@ contract ICO is AccessControl {
             revert CommanErrors.HardCapExceed();
         }
 
-        uint timestamp = block.timestamp;
+        uint256 timestamp = block.timestamp;
         address sender = msg.sender;
 
         // can not invest after closing time
@@ -130,36 +113,32 @@ contract ICO is AccessControl {
         }
     
         // calculate tokens 
-        uint256 tokenAmount = ( amount / rate )* 1 ether;
+        uint256 tokenAmount = ( amount / rate ) * 1 ether;
 
         //check if the contract have enough tokens
         if(tokenAmount > token.balanceOf(address(this))){
             revert CommanErrors.NotEnoughTokens();
         }
-    
+        // cache contribution object
+        Investment memory investObj = contributions[sender];
+
         // Add the investment amount against the address
         unchecked {
             contributions[sender] = Investment({
-                amount:amount+contributions[sender].amount,
-                tokenAmount:tokenAmount+contributions[sender].tokenAmount
+                amount:amount+investObj.amount,
+                tokenAmount:tokenAmount+investObj.tokenAmount
             });
             raisedAmount += amount;
         }
   
-        // transfer token to user
-        // token.transfer(sender, tokenAmount);
-               // Add the investor to the array if not already added
-        if (!isInvestor(sender)) {
-            investors.push(sender);
-        }
-
-        if(goalReached){
-            uint lockBal = contributions[sender].tokenAmount;
+        // check if the soft cap is reached and tansfer token directly to investor    
+        if(raisedAmount >= softCap){
+            uint256 lockBal = contributions[sender].tokenAmount;
             contributions[sender].tokenAmount = 0;
             token.transfer(sender, lockBal);
-        }else if(address(this).balance >= softCap){
-            goalReached = true;
-            distribution();
+
+            // Emit the Claim event
+            emit Claim(sender, lockBal);
         }
 
 
@@ -168,22 +147,35 @@ contract ICO is AccessControl {
     }
 
 
-     /**
-     * @dev Function for the owner to distribute tokens to investors
+
+    /**
+     * @dev Function for claiming tokens
      */
-    function distribution() private {
-        uint len = investors.length;
-        for (uint i; i < len; ) {
-            address investor = investors[i];
-            uint lockBal = contributions[investor].tokenAmount;
-            if (lockBal != 0) {
-                token.transfer(investor, lockBal);
-                contributions[investor].tokenAmount = 0;
-            }
-            unchecked {
-                i = i + 1;
-            }
+    function claimToken() external {
+        //cache msgSender 
+        address sender = msg.sender;
+
+
+        // ICO contract balance
+        uint256 balance = contributions[sender].tokenAmount;
+        // check if the soft cap is reached
+        if (raisedAmount < softCap) {
+            revert CommanErrors.SoftCapNotReached();
         }
+
+        // check if the contract balance is zero
+        if (balance == 0) {
+            revert CommanErrors.NoInvestment();
+        }
+
+        // mark contribution to zero to prevent reentrancy
+        contributions[sender].tokenAmount = 0;
+        // trasnfer Tokens
+        token.transfer(sender, balance);
+
+        // emit claim event 
+        emit Claim(sender, balance);
+
     }
 
 
@@ -197,7 +189,8 @@ contract ICO is AccessControl {
         }
 
         // ICO contract balance
-        uint balance = address(this).balance;
+        uint256 balance = address(this).balance;
+        //cache msgSender
         address sender = msg.sender;
         // check if the soft cap is reached
         if (balance < softCap) {
@@ -206,11 +199,12 @@ contract ICO is AccessControl {
 
         // check if the contract balance is zero
         if (balance == 0) {
-            revert CommanErrors.AlreadyWithdrawn();
+            revert CommanErrors.WithdrawFailed();
         }
 
         // Transfer the contract balance to the owner
         (bool success, ) = payable(sender).call{value: balance}("");
+        // check if the transfer is successful
         if (!success) revert CommanErrors.TransferFailed();
 
         // Emit the Withdrawal event
@@ -224,23 +218,28 @@ contract ICO is AccessControl {
         if (block.timestamp < closeTime) {
             revert CommanErrors.NotOpen();
         }
-        uint balance = address(this).balance;
         address sender = msg.sender;
 
          // check if the soft cap is reached
-        if (balance >= softCap) {
+        if (raisedAmount >= softCap) {
             revert CommanErrors.SoftCapReached();
         }
+        // get investmnet object
+        Investment storage lockBal = contributions[sender];
+        uint256 amount = lockBal.amount;
 
-        Investment  storage lockBal = contributions[sender];
-        uint amount = lockBal.amount;
+        // check if eth amount is zero
         if (amount == 0) {
             revert CommanErrors.WithdrawFailed();
         }
+        // mark amount to zero to prevent reentrancy
         lockBal.amount = 0;
         // Transfer the contract balance to the owner
         (bool success, ) = payable(sender).call{value: amount}("");
+
+        // check if the transfer is successful
         if (!success) revert CommanErrors.TransferFailed();  
+        // emit withdraw event
         emit Withdrawal(sender, amount); 
     }
 
@@ -248,7 +247,7 @@ contract ICO is AccessControl {
      * @dev Function for the owner to change the ICO token price
      * @param newPrice New price of the ICO token in ETH
      */
-    function changePrice(uint newPrice) external  onlyRole(OWNER_ROLE){
+    function changePrice(uint256 newPrice) external  onlyRole(OWNER_ROLE){
         // check if the new price is zero
         if (newPrice == 0) {
             revert CommanErrors.ZeroAmount();
@@ -270,7 +269,7 @@ contract ICO is AccessControl {
      * @dev Function for the owner to change the ICO hard cap
      * @param newHardCap New hard cap for the ICO
      */
-    function changeHardCap(uint newHardCap) external  onlyRole(OWNER_ROLE) {
+    function changeHardCap(uint256 newHardCap) external  onlyRole(OWNER_ROLE) {
         hardCap = newHardCap;
     }
 
@@ -278,7 +277,7 @@ contract ICO is AccessControl {
      * @dev Function for the owner to change the ICO soft cap
      * @param newSoftCap New soft cap for the ICO
      */
-    function changeSoftCap(uint newSoftCap) external  onlyRole(OWNER_ROLE) {
+    function changeSoftCap(uint256 newSoftCap) external  onlyRole(OWNER_ROLE) {
         softCap = newSoftCap;
     }
 
@@ -287,7 +286,7 @@ contract ICO is AccessControl {
      * @dev Function for the owner to change the closing time
      * @param newCloseTime New closing time for the ICO
      */
-    function changeCloseTime(uint newCloseTime) external  onlyRole(OWNER_ROLE) {
+    function changeCloseTime(uint256 newCloseTime) external  onlyRole(OWNER_ROLE) {
         closeTime = newCloseTime;
     }
 
@@ -296,7 +295,7 @@ contract ICO is AccessControl {
      * @dev Function for the owner to change the starting time
      * @param newStartTime New starting time for the ICO
      */
-    function changeStartTime(uint newStartTime) external  onlyRole(OWNER_ROLE) {
+    function changeStartTime(uint256 newStartTime) external  onlyRole(OWNER_ROLE) {
         startTime = newStartTime;
     }
 

@@ -13,7 +13,6 @@ library CommanErrors{
     error TransferFailed();            // Error thrown when a fund transfer operation fails.
     error ZeroAddress();               // Error thrown when address is equal to zero address.
     error NotOpen();                   // Error thrown when current time is before unlock time.
-    error AlreadyWithdrawn();          // Error thrown when ico balance already withdrawn.
     error WrongEndTime();              // Error thrown when input wrogn end time for ICO.
     error InvalidAmount();             // Error thrown when input investment amount is invalid.
     error WrongStartTime();            // Error thrown when input investment amount is invalid.
@@ -25,5 +24,6 @@ library CommanErrors{
     error WithdrawFailed(); // Error thrown when input investment amount is invalid.
     error SoftCapReached();         // Error thrown when input investment amount is invalid.
     error NotEnoughTokens();         // Error thrown when input investment amount is invalid.
+    error NoInvestment();         // Error thrown when input investment amount is invalid.
 
 }

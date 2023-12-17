@@ -15,21 +15,14 @@ describe("ICO", function () {
 
     const token = await ICOToken.deploy("Wrapped ETH","WETH",ethers.utils.parseEther("1000000","wei"))
     console.log("token.address",token.address)
-    console.log(
-      Math.floor(Date.now() / 1000) + 60, // start time 1 minute from now
-      Math.floor(Date.now() / 1000) + 600, // end time 10 minutes from now
-      ethers.utils.parseEther('0.5', 'wei'),
-      ethers.utils.parseEther('1', 'wei'),
-      token.address,
-      ethers.utils.parseEther("0.001","wei") // rate
-    )
+
     const ico = await ICO.deploy(
       Math.floor(Date.now() / 1000) + 60, // start time 1 minute from now
       Math.floor(Date.now() / 1000) + 600, // end time 10 minutes from now
       ethers.utils.parseEther('0.5', 'wei'),
       ethers.utils.parseEther('1', 'wei'),
+      ethers.utils.parseEther("0.001","wei"), // rate
       token.address,
-      ethers.utils.parseEther("0.001","wei") // rate
     );
       console.log("ico",ico.address)
 

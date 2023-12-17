@@ -14,8 +14,8 @@ async function main() {
     Math.floor(Date.now() / 1000) + 60000, // end time 10 minutes from now
     ICOARG[2],
     ICOARG[3],
-    ICOARG[4], // token
-    ICOARG[5],
+    ICOARG[4], 
+    ICOARG[5],// token
   );
   await ico.deployed();
   
