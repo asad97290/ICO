@@ -70,8 +70,8 @@ describe("ICO", function () {
       await network.provider.send('evm_mine'); // mine a new block to finalize the time change
       await expect(ico.connect(otherAccount).invest({ value: ethers.utils.parseEther('0', 'wei') })).to.be.revertedWithCustomError(ico,'ZeroAmount');
 
-      await expect(ico.connect(otherAccount).invest({ value: ethers.utils.parseEther('0.1', 'wei') })).to.emit(ico, 'Invest').withArgs(otherAccount.address, ethers.utils.parseEther('0.1', 'wei'));
-      await expect(ico.connect(otherAccount).invest({ value: ethers.utils.parseEther('0.4', 'wei') })).to.emit(ico, 'Invest').withArgs(otherAccount.address, ethers.utils.parseEther('0.4', 'wei'));
+      await expect(ico.connect(otherAccount).invest({ value: ethers.utils.parseEther('0.1', 'wei') })).to.emit(ico, 'Invest').withArgs(otherAccount.address, ethers.utils.parseEther('0.1', 'wei'),ethers.utils.parseEther('100', 'wei'));
+      await expect(ico.connect(otherAccount).invest({ value: ethers.utils.parseEther('0.4', 'wei') })).to.emit(ico, 'Invest').withArgs(otherAccount.address, ethers.utils.parseEther('0.4', 'wei'),ethers.utils.parseEther('400', 'wei'));
       await network.provider.send('evm_increaseTime', [700]); // move time forward by 700 seconds
       await network.provider.send('evm_mine'); // mine a new block to finalize the time change
   
@@ -111,9 +111,6 @@ describe("ICO", function () {
       await ico.connect(owner).changePrice(ethers.utils.parseEther('0.0001', 'wei'))
       expect(await ico.rate()).to.equal(ethers.utils.parseEther('0.0001', 'wei'));
     });
-
-
-
   
   });
 

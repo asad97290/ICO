@@ -11,7 +11,7 @@ async function main() {
   
   const ico = await ICO.deploy(
     Math.floor(Date.now() / 1000) + 60, // start time 1 minute from now
-    Math.floor(Date.now() / 1000) + 6000, // end time 10 minutes from now
+    Math.floor(Date.now() / 1000) + 60000, // end time 10 minutes from now
     ICOARG[2],
     ICOARG[3],
     ICOARG[4], // token

@@ -1,24 +1,21 @@
 import { Controller, Get,Post,Body,Param,Query } from '@nestjs/common';
 import { AppService } from './app.service';
-import { BodyDto, ParamsDto, QueryDto } from './dto';
+import { BodyDto, ParamsDto,ResponseDto } from './dto';
 
 
-@Controller('api')
+@Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
-  @Get('user/:id')
-  getHello(@Param() params:ParamsDto): string {
-    return this.appService.getHello(params.id);
+  @Get('getTxDetails/:address')
+  getTxDetails(@Param() params:ParamsDto): Promise<ResponseDto> {
+    return this.appService.getTxDetails(params.address);
   }
 
-  @Get()
-  getQuery(@Query() query:QueryDto): string {
-    return this.appService.getHello(query.id);
-  }
 
-  @Post()
-  setHello(@Body() body:BodyDto):string {
-    return this.appService.setHello(body.name);
+
+  @Post('saveTxData')
+  saveTxData(@Body() body:BodyDto):Promise<ResponseDto> {
+    return this.appService.saveTxData(body);
   }
 }

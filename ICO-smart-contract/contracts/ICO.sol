@@ -22,12 +22,15 @@ contract ICO is AccessControl {
     ICOToken public token;
     address[] public investors;
     bool public goalReached;
-
-    // Mapping to track the locked balance of each address
-    mapping(address => uint) public lockBalance;
+    struct Investment{
+        uint amount;
+        uint tokenAmount;
+    }
+    // Mapping to track the contributions of each address
+    mapping(address => Investment) public contributions;
 
     event Withdrawal(address account, uint amount);
-    event Invest(address account, uint amount);
+    event Invest(address account, uint ethAmount,uint tokenAmount);
 
     /**
      * @dev Constructor to initialize ICO parameters
@@ -79,13 +82,19 @@ contract ICO is AccessControl {
      * @return True if the address is an investor, false otherwise
      */
     function isInvestor(address investor) private view returns (bool) {
-        for (uint i = 0; i < investors.length; i++) {
+        uint len = investors.length;
+        for (uint i = 0; i < len;) {
             if (investors[i] == investor) {
                 return true;
+            }
+
+            unchecked {
+                i = i + 1;
             }
         }
         return false;
     }
+
 
     /**
      * @dev Function to allow investors to contribute funds to the ICO
@@ -97,10 +106,20 @@ contract ICO is AccessControl {
         if (amount == 0) {
             revert CommanErrors.ZeroAmount();
         }
-
+    
+        // can not invest amount exceeding hard cap
+        if (amount > hardCap) {
+            revert CommanErrors.HardCapExceed();
+        }
+        
+        // check if raised amount greter then hardcap
+        if(raisedAmount > hardCap){
+            revert CommanErrors.HardCapExceed();
+        }
 
         uint timestamp = block.timestamp;
         address sender = msg.sender;
+
         // can not invest after closing time
         if (timestamp > closeTime) {
             revert CommanErrors.CanNotInvestAfterClosing();
@@ -109,38 +128,64 @@ contract ICO is AccessControl {
         if (timestamp < startTime) {
             revert CommanErrors.CanNotInvestBeforeStart();
         }
-        // can not invest amount exceeding hard cap
-        if (amount > hardCap) {
-            revert CommanErrors.HardCapExceed();
-        }
+    
+        // calculate tokens 
+        uint256 tokenAmount = ( amount / rate )* 1 ether;
 
-        uint256 tokenAmount = amount / rate;
+        //check if the contract have enough tokens
         if(tokenAmount > token.balanceOf(address(this))){
             revert CommanErrors.NotEnoughTokens();
         }
     
-
         // Add the investment amount against the address
         unchecked {
-            lockBalance[sender] += amount;
-            raisedAmount +=amount;
+            contributions[sender] = Investment({
+                amount:amount+contributions[sender].amount,
+                tokenAmount:tokenAmount+contributions[sender].tokenAmount
+            });
+            raisedAmount += amount;
         }
-        // Add the investor to the array if not already added
+  
+        // transfer token to user
+        // token.transfer(sender, tokenAmount);
+               // Add the investor to the array if not already added
         if (!isInvestor(sender)) {
             investors.push(sender);
         }
 
         if(goalReached){
-            uint lockBal = lockBalance[sender];
-            token.transfer(sender, lockBal / rate);
+            uint lockBal = contributions[sender].tokenAmount;
+            contributions[sender].tokenAmount = 0;
+            token.transfer(sender, lockBal);
         }else if(address(this).balance >= softCap){
             goalReached = true;
             distribution();
         }
 
+
         // Emit the Invest event
-        emit Invest(sender, amount);
+        emit Invest(sender, amount,tokenAmount);
     }
+
+
+     /**
+     * @dev Function for the owner to distribute tokens to investors
+     */
+    function distribution() private {
+        uint len = investors.length;
+        for (uint i; i < len; ) {
+            address investor = investors[i];
+            uint lockBal = contributions[investor].tokenAmount;
+            if (lockBal != 0) {
+                token.transfer(investor, lockBal);
+                contributions[investor].tokenAmount = 0;
+            }
+            unchecked {
+                i = i + 1;
+            }
+        }
+    }
+
 
     /**
      * @dev Function for the owner to withdraw funds from the ICO contract
@@ -187,14 +232,16 @@ contract ICO is AccessControl {
             revert CommanErrors.SoftCapReached();
         }
 
-        uint lockBal = lockBalance[sender];
-        if (lockBal == 0) {
-            revert CommanErrors.YouAreNotInvestor();
+        Investment  storage lockBal = contributions[sender];
+        uint amount = lockBal.amount;
+        if (amount == 0) {
+            revert CommanErrors.WithdrawFailed();
         }
+        lockBal.amount = 0;
         // Transfer the contract balance to the owner
-        (bool success, ) = payable(sender).call{value: lockBal}("");
+        (bool success, ) = payable(sender).call{value: amount}("");
         if (!success) revert CommanErrors.TransferFailed();  
-        emit Withdrawal(sender, lockBal); 
+        emit Withdrawal(sender, amount); 
     }
 
     /**
@@ -210,23 +257,6 @@ contract ICO is AccessControl {
         rate = newPrice;
     }
 
-    /**
-     * @dev Function for the owner to distribute tokens to investors
-     */
-    function distribution() private {
-        uint len = investors.length;
-        for (uint i; i < len; ) {
-            address investor = investors[i];
-            uint lockBal = lockBalance[investor];
-            if (lockBal != 0) {
-                token.transfer(investor, lockBal / rate);
-                lockBalance[investor] = 0;
-            }
-            unchecked {
-                i = i + 1;
-            }
-        }
-    }
 
     /**
      * @dev Function for the owner to change the ICO token address
@@ -250,6 +280,24 @@ contract ICO is AccessControl {
      */
     function changeSoftCap(uint newSoftCap) external  onlyRole(OWNER_ROLE) {
         softCap = newSoftCap;
+    }
+
+
+    /**
+     * @dev Function for the owner to change the closing time
+     * @param newCloseTime New closing time for the ICO
+     */
+    function changeCloseTime(uint newCloseTime) external  onlyRole(OWNER_ROLE) {
+        closeTime = newCloseTime;
+    }
+
+
+    /**
+     * @dev Function for the owner to change the starting time
+     * @param newStartTime New starting time for the ICO
+     */
+    function changeStartTime(uint newStartTime) external  onlyRole(OWNER_ROLE) {
+        startTime = newStartTime;
     }
 
     /**

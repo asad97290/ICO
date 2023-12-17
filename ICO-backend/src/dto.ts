@@ -1,9 +1,15 @@
 export class BodyDto {
-    name: string;
-  }
+  transactionHash: string;
+  address: string;
+  investment:number;
+}
+
 export class ParamsDto {
-    id: string;
-  }
-  export class QueryDto {
-    id: string;
-  }
+  address: string;
+}
+
+export class ResponseDto {
+  msg: string;
+  status: string;
+  data:object;
+}
