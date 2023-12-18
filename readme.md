@@ -12,9 +12,18 @@ npx hardhat compile
 
 npx hardhat test
 
+update args/ directory for smart contract deployment parameters
+
+## Testnet deployment
 npx hardhat run scripts/deployToken.js  --network arbitrum-sepolia
 
 npx hardhat run scripts/deployICO.js  --network arbitrum-sepolia
+
+## Mainnet deployment
+npx hardhat run scripts/deployToken.js  --network arbitrum-mainnet
+
+npx hardhat run scripts/deployICO.js  --network arbitrum-mainnet
+
 
 ## Start Backend
 
