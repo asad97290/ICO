@@ -5,7 +5,7 @@ async function main() {
   const [owner] = await ethers.getSigners();
   const ICOToken = await ethers.getContractFactory("ICOToken");
   const token = ICOToken.attach(
-    ICOARG[4]
+    ICOARG[5]
   );
   const ICO = await ethers.getContractFactory("ICO")
   

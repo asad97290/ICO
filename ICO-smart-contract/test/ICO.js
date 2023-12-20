@@ -19,9 +19,9 @@ describe("ICO", function () {
     const ico = await ICO.deploy(
       Math.floor(Date.now() / 1000) + 60, // start time 1 minute from now
       Math.floor(Date.now() / 1000) + 600, // end time 10 minutes from now
-      ethers.utils.parseEther('0.5', 'wei'),
-      ethers.utils.parseEther('1', 'wei'),
-      ethers.utils.parseEther("0.001","wei"), // rate
+      ethers.utils.parseEther('1000', 'wei'),
+      ethers.utils.parseEther('2000', 'wei'),
+      ethers.utils.parseEther("0.1","wei"), // rate
       token.address,
     );
       console.log("ico",ico.address)
@@ -38,9 +38,9 @@ describe("ICO", function () {
       let {ico } =  await loadFixture(deployICOFixture)
       expect(await ico.startTime()).to.be.above(0);
       expect(await ico.closeTime()).to.be.above(await ico.startTime());
-      expect(await ico.softCap()).to.equal(ethers.utils.parseEther('0.5', 'wei'));
-      expect(await ico.hardCap()).to.equal(ethers.utils.parseEther('1', 'wei'));
-      expect(await ico.rate()).to.equal(ethers.utils.parseEther('0.001', 'wei'));
+      expect(await ico.softCap()).to.equal(ethers.utils.parseEther('1000', 'wei'));
+      expect(await ico.hardCap()).to.equal(ethers.utils.parseEther('2000', 'wei'));
+      expect(await ico.rate()).to.equal(ethers.utils.parseEther('0.1', 'wei'));
     });
   
     it('should not allow investment before start time', async () => {
@@ -63,14 +63,13 @@ describe("ICO", function () {
       await network.provider.send('evm_mine'); // mine a new block to finalize the time change
       await expect(ico.connect(otherAccount).invest({ value: ethers.utils.parseEther('0', 'wei') })).to.be.revertedWithCustomError(ico,'ZeroAmount');
 
-      await expect(ico.connect(otherAccount).invest({ value: ethers.utils.parseEther('0.1', 'wei') })).to.emit(ico, 'Invest').withArgs(otherAccount.address, ethers.utils.parseEther('0.1', 'wei'),ethers.utils.parseEther('100', 'wei'));
-      await expect(ico.connect(otherAccount).invest({ value: ethers.utils.parseEther('0.4', 'wei') })).to.emit(ico, 'Invest').withArgs(otherAccount.address, ethers.utils.parseEther('0.4', 'wei'),ethers.utils.parseEther('400', 'wei'));
+      await ico.connect(otherAccount).invest({ value: ethers.utils.parseEther('100', 'wei') })
       await network.provider.send('evm_increaseTime', [700]); // move time forward by 700 seconds
       await network.provider.send('evm_mine'); // mine a new block to finalize the time change
   
-      await expect(ico.connect(owner).withdraw()).to.emit(ico, 'Withdrawal').withArgs(owner.address, ethers.utils.parseEther('0.5', 'wei'));
+      await expect(ico.connect(owner).withdraw()).to.emit(ico, 'Withdrawal').withArgs(owner.address, ethers.utils.parseEther('100', 'wei'));
 
-      expect(await token.balanceOf(otherAccount.address),ethers.utils.parseEther('2000', 'wei'))
+      expect(await token.balanceOf(otherAccount.address),ethers.utils.parseEther('1000', 'wei'))
 
     });
 

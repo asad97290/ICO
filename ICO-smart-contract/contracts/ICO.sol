@@ -81,27 +81,16 @@ contract ICO is AccessControl {
     /**
      * @dev Function to allow investors to contribute funds to the ICO
      */
-    function invest() external payable {
+    function invest(uint256 tokenAmount) external payable {
         //cache msgValue 
         uint256 amount = msg.value;
-
-        // Revert if the investment amount is zero
-        if (amount == 0) {
-            revert CommanErrors.ZeroAmount();
-        }
-    
-        // can not invest amount exceeding hard cap
-        if (amount > hardCap) {
-            revert CommanErrors.HardCapExceed();
-        }
-        
-        // check if raised amount greter then hardcap
-        if(raisedAmount > hardCap){
-            revert CommanErrors.HardCapExceed();
-        }
-
-        uint256 timestamp = block.timestamp;
         address sender = msg.sender;
+        
+        Investment memory investObj = contributions[sender];
+        uint256 timestamp = block.timestamp;
+        if(tokenAmount  != (amount/rate)*1 ether){
+            revert CommanErrors.WrongAmount();
+        }
 
         // can not invest after closing time
         if (timestamp > closeTime) {
@@ -111,16 +100,28 @@ contract ICO is AccessControl {
         if (timestamp < startTime) {
             revert CommanErrors.CanNotInvestBeforeStart();
         }
+
+        // Revert if the investment amount is zero
+        if (amount == 0) {
+            revert CommanErrors.ZeroAmount();
+        }
+    
+        // can not invest amount exceeding hard cap
+        if (tokenAmount+investObj.tokenAmount > hardCap) {
+            revert CommanErrors.HardCapExceed();
+        }
+        
+    
+
+     
     
         // calculate tokens 
-        uint256 tokenAmount = ( amount / rate ) * 1 ether;
 
         //check if the contract have enough tokens
         if(tokenAmount > token.balanceOf(address(this))){
             revert CommanErrors.NotEnoughTokens();
         }
         // cache contribution object
-        Investment memory investObj = contributions[sender];
 
         // Add the investment amount against the address
         unchecked {
@@ -132,7 +133,7 @@ contract ICO is AccessControl {
         }
   
         // check if the soft cap is reached and tansfer token directly to investor    
-        if(raisedAmount >= softCap){
+        if( (raisedAmount/rate)* 1 ether >= softCap){
             uint256 lockBal = contributions[sender].tokenAmount;
             contributions[sender].tokenAmount = 0;
             token.transfer(sender, lockBal);
@@ -159,7 +160,7 @@ contract ICO is AccessControl {
         // ICO contract balance
         uint256 balance = contributions[sender].tokenAmount;
         // check if the soft cap is reached
-        if (raisedAmount < softCap) {
+        if ( (raisedAmount/rate)* 1 ether < softCap) {
             revert CommanErrors.SoftCapNotReached();
         }
 
@@ -193,7 +194,7 @@ contract ICO is AccessControl {
         //cache msgSender
         address sender = msg.sender;
         // check if the soft cap is reached
-        if (balance < softCap) {
+        if ((balance/rate)* 1 ether < softCap) {
             revert CommanErrors.SoftCapNotReached();
         }
 
@@ -221,7 +222,7 @@ contract ICO is AccessControl {
         address sender = msg.sender;
 
          // check if the soft cap is reached
-        if (raisedAmount >= softCap) {
+        if ((raisedAmount/rate)* 1 ether >= softCap) {
             revert CommanErrors.SoftCapReached();
         }
         // get investmnet object

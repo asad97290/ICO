@@ -233,15 +233,15 @@ function App() {
   return (
     <>
       <p>{accounts}</p>
-      <h1>ICO</h1>
+      <h1>ICO of ICOTK</h1>
       <div>
         <p>Start date:{startDate} </p>
         <p>End date:{endDate} </p>
-        <p>Soft Cap:{softCap} ETH</p>
-        <p>Hard Cap:{hardCap} ETH</p>
+        <p>Soft Cap:{softCap} ICOTK</p>
+        <p>Hard Cap:{hardCap} ICOTK</p>
         <p>Raise Amount:{raisedAmount} ETH</p>
         <p>your Contribution:{lockBalance} ETH</p>
-        <p>Token Balance:{tokenBalance} </p>
+        <p>Token Balance:{tokenBalance} ICOTK</p>
         <input
           type="number"
           placeholder="Enter investment amount"
@@ -249,14 +249,10 @@ function App() {
         />
       </div>
       <div >
-        {Math.floor(Date.now() / 1000) >
-        (async () => Number(await contract?.methods?.closeTime().call()))() ? (
           <div className="card">
             <button onClick={invest}>invest</button>
           </div>
-        ) : (
-          <></>
-        )}
+       
         {isAdmin ? (
           <div className="card">
             <button onClick={withdrawAdmin}>withdraw Admin</button>
