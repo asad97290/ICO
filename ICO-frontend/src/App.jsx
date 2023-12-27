@@ -230,7 +230,8 @@ function App() {
     }
   }
 
-  return (
+
+    /** 
     <>
       <p>{accounts}</p>
       <h1>ICO of ICOTK</h1>
@@ -292,7 +293,38 @@ function App() {
         ))}
       </ul>
     </>
-  );
+
+*/
+
+return (
+  <>
+  <div class="ico-row" id="middle-desk">
+      <div class="separator"></div>
+
+      <div class="white-desk ico-desk">
+        <div class="row list">
+          <div class="col-12 title-h4">
+            <i class="fa fa-calendar" aria-hidden="true"></i>
+            <h4>Token Sale: 14 Dec – 20 Dec</h4>
+          </div>
+          <div class="col-12 col-md-6">
+            <li><span class="grey">Ticker: </span>LQDX</li>
+            <li><span class="grey">Token type: </span>ERC-20</li>
+            <li>
+              <span class="grey">ICO Token Price:</span> 1 LQDX = 0.065 USD
+            </li>
+            <li><span class="grey">Fundraising Goal:</span> $300,000</li>
+            <li><span class="grey">Your contribution:</span> $300,000</li>
+            <li><span class="grey">Total Tokens: </span>400,000,000</li>
+            <li><span class="grey">Available for Token Sale: </span>18,73%</li>
+          </div>
+          <div class="col-12 col-md-6"></div>
+        </div>
+      </div>
+    </div>
+</>
+);
+  
 }
 
 export default App;
