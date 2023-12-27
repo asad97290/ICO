@@ -13,7 +13,7 @@ RUN yarn
 
 
 # Command to run the application
-CMD ["npm", "run", "dev"]
+CMD ["yarn", "dev"]
 
 
 
