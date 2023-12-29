@@ -7,11 +7,16 @@ import { BodyDto, ParamsDto,ResponseDto } from './dto';
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
+  @Get('/')
+  index(): String {
+    return "Hello world"
+  }
+
+
   @Get('getTxDetails/:address')
   getTxDetails(@Param() params:ParamsDto): Promise<ResponseDto> {
     return this.appService.getTxDetails(params.address);
   }
-
 
 
   @Post('saveTxData')

@@ -13,11 +13,11 @@ RUN yarn
 
 
 # Command to run the application
-CMD ["yarn", "dev"]
+CMD ["yarn", "start:dev"]
 
 
 
-EXPOSE 5173
+EXPOSE 3333
 
 
 
